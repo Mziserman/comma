@@ -17,15 +17,15 @@ module Comma
 
     def method_missing(sym, *args, &block)
       model_class = @instance.class
-      @results << self.value_humanizer.call(sym, model_class) if args.blank?
+      @results << header_string(sym) if args.blank?
       args.each do |arg|
         case arg
         when Hash
           arg.each do |k, v|
-            @results << self.value_humanizer.call(v, get_association_class(model_class, sym))
+            @results << ((v.is_a? String) ? v : header_string(v))
           end
         when Symbol
-          @results << self.value_humanizer.call(arg, get_association_class(model_class, sym))
+          @results << header_string(arg)
         when String
           @results << self.value_humanizer.call(arg, model_class)
         else
@@ -38,13 +38,16 @@ module Comma
       @results << header
     end
 
+    def header_string(attribute)
+      @instance.class.human_attribute_name(attribute)
+    end
     private
 
-    def get_association_class(model_class, association)      
+    def get_association_class(model_class, association)
       if model_class.respond_to?(:reflect_on_association)
         association = model_class.reflect_on_association(association)
         association.klass rescue nil
-      end      
+      end
     end
   end
 end
